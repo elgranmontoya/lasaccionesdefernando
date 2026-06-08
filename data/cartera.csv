@@ -1,0 +1,8 @@
+﻿symbol;qty;buy;price;div;com;opened
+VIE;10;buy;28;;0;yes
+VIE;1;dividend;;8,5;;no
+VIE;1;dividend;;9,11;;no
+ITX.MC;11;buy;49,65;;3,85;yes
+ITX.MC;;dividend;;;7,48;no
+ITX.MC;;dividend;;;7,48;no
+ITX.MC;;dividend;;;7,8;no
