@@ -1,1 +1,8 @@
 ﻿date;symbol;type;qty;price;fees;dividend;tax
+8/4/25;VIE;buy;10;28;;0;
+14/5/25;VIE;dividend;1;;;8,5;
+13/5/26;VIE;dividend;1;;;9,11;
+19/12/24;ITX.MC;buy;11;49,65;3,85;;
+2/5/25;ITX.MC;dividend;1;;;7,48;
+3/11/25;ITX.MC;dividend;1;;;7,48;
+4/5/26;ITX.MC;dividend;1;;;7,8;
