@@ -1,243 +1,893 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cuadro de mando inversión v2</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root{--bg:#f5f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--pri:#2563eb;--ok:#16a34a;--bad:#dc2626;--line:#e5e7eb}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    header{padding:20px 24px;background:linear-gradient(135deg,#1d4ed8,#0f172a);color:#fff}
-    header h1{margin:0 0 6px;font-size:24px}
-    header p{margin:0;color:#dbeafe}
-    main{padding:20px;max-width:1400px;margin:0 auto;display:grid;gap:16px}
-    .grid{display:grid;gap:16px}
-    .grid.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.05);padding:16px}
-    .card h2,.card h3{margin:0 0 12px}
-    .muted{color:var(--muted);font-size:13px}
-    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .stat{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafafa}
-    .stat .label{font-size:12px;color:var(--muted)}
-    .stat .value{font-size:20px;font-weight:700;margin-top:4px}
-    .value.ok{color:var(--ok)} .value.bad{color:var(--bad)}
-    label{display:block;font-size:13px;margin-bottom:4px;color:#374151}
-    input,select,button,textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid #d1d5db;background:#fff;font:inherit}
-    button{cursor:pointer;background:var(--pri);color:#fff;border:none;font-weight:600}
-    button.secondary{background:#475569}
-    button.ghost{background:#fff;color:#111827;border:1px solid var(--line)}
-    .row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .toolbar > *{flex:1 1 180px}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:right;vertical-align:middle}
-    th:first-child,td:first-child{text-align:left}
-    tr:hover td{background:#fafafa}
-    .nowrap{white-space:nowrap}
-    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px}
-    .pill.green{background:#dcfce7;color:#166534}.pill.red{background:#fee2e2;color:#991b1b}.pill.gray{background:#e5e7eb;color:#374151}
-    canvas{max-width:100%}
-    .table-wrap{overflow:auto}
-    .two-col{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-    .kpi-list{display:grid;gap:10px}
-    .kpi{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fafafa}
-    .kpi span:last-child{font-weight:700}
-    .small{font-size:12px;color:var(--muted)}
-    .split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .hide{display:none}
-    @media (max-width:1100px){.grid.cols3,.grid.cols2,.stats,.row,.row2,.two-col,.split{grid-template-columns:1fr}.toolbar > *{flex-basis:100%}}
-  </style>
-</head>
-<body>
-<header>
-  <h1>Cuadro de mando de inversiones v2</h1>
-  <p>Histórico, medias móviles, escenarios, comparativa con referencia, seguimiento, simulación fiscal y análisis por posición.</p>
-</header>
-<main>
-  <section class="card">
-    <h2>Resumen de cartera</h2>
-    <div class="stats">
-      <div class="stat"><div class="label">Valor cartera</div><div class="value" id="kpiPortfolioValue">-</div></div>
-      <div class="stat"><div class="label">Ganancia / pérdida</div><div class="value" id="kpiPnL">-</div></div>
-      <div class="stat"><div class="label">Rentabilidad %</div><div class="value" id="kpiReturnPct">-</div></div>
-      <div class="stat"><div class="label">Coste fiscal estimado</div><div class="value" id="kpiTax">-</div></div>
-    </div>
-    <p class="muted">El coste fiscal aplica 19% sobre ganancias netas y compensa pérdidas hasta el máximo del beneficio, nunca por encima de la ganancia.</p>
-  </section>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Cuadro de mando inversión v2</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            :root {
+                --bg: #f5f7fb;
+                --card: #fff;
+                --text: #1f2937;
+                --muted: #6b7280;
+                --pri: #2563eb;
+                --ok: #16a34a;
+                --bad: #dc2626;
+                --line: #e5e7eb
+            }
 
-  <section class="card">
-    <div class="toolbar">
-      <div>
-        <label>Fuente de datos</label>
-        <select id="sourceSelect">
-          <option value="repoCsv">CSV en GitHub</option>
-          <option value="googleFinance">Google Finance via Sheet CSV</option>
-          <option value="alphaVantage">Alpha Vantage</option>
-          <option value="finnhub">Finnhub</option>
-          <option value="yahooBackend">Yahoo backend</option>
-        </select>
-      </div>
-      <div>
-        <label>Ticker / símbolo</label>
-        <input id="symbolInput" placeholder="ITX.MC / SAN.MC / AAPL" />
-      </div>
-      <div>
-        <label>Referencia</label>
-        <input id="benchmarkInput" placeholder="IBEX / SPY / ^GSPC" />
-      </div>
-      <div>
-        <label>Días históricos</label>
-        <input id="daysInput" type="number" value="365" min="30" max="5000" />
-      </div>
-    </div>
-    <div class="toolbar" style="margin-top:12px">
-      <div><button id="loadHistoricalBtn">Cargar histórico</button></div>
-      <div><button id="loadPortfolioBtn" class="secondary">Cargar cartera CSV</button></div>
-      <div><button id="recalcBtn" class="ghost">Recalcular KPI</button></div>
-      <div><button id="addScenarioBtn" class="ghost">Añadir escenario</button></div>
-    </div>
-    <p class="small">Configura las URLs en el bloque CONFIG del código. Para GitHub Pages se recomienda CSV/JSON estáticos en el repositorio.</p>
-  </section>
+            body {
+                margin: 0;
+                font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+                background: var(--bg);
+                color: var(--text)
+            }
 
-  <section class="grid cols2">
-    <div class="card">
-      <h2>Evolución histórica</h2>
-      <canvas id="priceChart" height="110"></canvas>
-    </div>
-    <div class="card">
-      <h2>Comparativa con referencia</h2>
-      <canvas id="benchmarkChart" height="110"></canvas>
-    </div>
-  </section>
+            header {
+                padding: 20px 24px;
+                background: linear-gradient(135deg,#1d4ed8,#0f172a);
+                color: #fff
+            }
 
-  <section class="grid cols2">
-    <div class="card">
-      <h2>Posiciones y operaciones</h2>
-      <div class="table-wrap">
-        <table id="portfolioTable">
-          <thead>
-            <tr>
-              <th>Valor</th><th>Cantidad</th><th>Compra media</th><th>Precio actual</th><th>PnL</th><th>PnL %</th><th>Dividendos</th><th>Comisiones</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <h2>Seguimiento y escenarios</h2>
-      <div class="split">
-        <div>
-          <label>Ticker vigilancia</label>
-          <input id="watchSymbol" placeholder="IBE.MC" />
-        </div>
-        <div>
-          <label>Precio objetivo</label>
-          <input id="watchTarget" type="number" step="0.0001" />
-        </div>
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button id="addWatchBtn">Añadir seguimiento</button>
-        <button id="simulateSaleBtn" class="secondary">Simular venta cartera</button>
-      </div>
-      <div class="table-wrap" style="margin-top:12px">
-        <table id="watchTable">
-          <thead><tr><th>Ticker</th><th>Objetivo</th><th>Precio</th><th>Estado</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div id="scenarioResult" class="card" style="margin-top:12px;background:#fafafa"></div>
-    </div>
-  </section>
+            header h1 {
+                margin: 0 0 6px;
+                font-size: 24px
+            }
 
-  <section class="card">
-    <div class="flex-between">
-      <h2>Simulación fiscal</h2>
-      <span class="pill gray">19% beneficio neto</span>
-    </div>
-    <div class="table-wrap">
-      <table id="taxTable">
-        <thead>
-          <tr><th>Valor</th><th>Ganancia</th><th>Pérdida</th><th>Base neta</th><th>Impuesto</th><th>Resultado neto</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </section>
+            header p {
+                margin: 0;
+                color: #dbeafe
+            }
 
-  <section class="card">
-    <h2>Configuración de repositorio</h2>
-    <div class="row2">
-      <div>
-        <label>URL histórico CSV/JSON</label>
-        <input id="historyUrlInput" placeholder="https://tuusuario.github.io/tu-repo/data/historico.csv" />
-      </div>
-      <div>
-        <label>URL cartera CSV/JSON</label>
-        <input id="portfolioUrlInput" placeholder="https://tuusuario.github.io/tu-repo/data/cartera.csv" />
-      </div>
-    </div>
-    <div class="row2" style="margin-top:12px">
-      <div>
-        <label>API key Alpha Vantage</label>
-        <input id="alphaKeyInput" placeholder="PON_AQUI_TU_API_KEY" />
-      </div>
-      <div>
-        <label>API key Finnhub</label>
-        <input id="finnhubKeyInput" placeholder="PON_AQUI_TU_API_KEY" />
-      </div>
-    </div>
-  </section>
-</main>
-<script>
-const CONFIG = {
-  // <<< PON LA URL DE TU CSV/JSON EN EL REPO DE GITHUB PAGES
-  HISTORY_URL: 'data/historico.csv',
-  PORTFOLIO_URL: 'data/cartera.csv',
-  WATCH_URL: 'data/seguimiento.csv',
-  // <<< PON AQUÍ TUS API KEYS SI VAS A LLAMAR DESDE FRONTEND
-  ALPHA_VANTAGE_API_KEY: 'PON_AQUI_TU_API_KEY',
-  FINNHUB_API_KEY: 'PON_AQUI_TU_API_KEY',
-  // <<< SI USAS BACKEND PROPIO PARA YAHOO, PON SU URL
-  YAHOO_BACKEND_URL: 'https://tu-backend-ejemplo.com/yahoo-history'
-};
-let priceChart, benchChart;
-let portfolioData = [];
-let watchData = [];
-let currentHistory = [];
-let currentBenchmark = [];
-function fmtEUR(v){return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(v||0)}
-function fmtPct(v){return new Intl.NumberFormat('es-ES',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2}).format((v||0)/100)}
-function parseCSV(text){const rows=text.trim().split(/\r?\n/).map(r=>r.split(','));return rows}
-function normalizeSymbol(s){return (s||'').trim()}
-function ma(vals,n){return vals.map((_,i)=>i<n-1?null:vals.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n)}
-function taxNet(g,p){const used=Math.min(g,p);const base=Math.max(0,g-used);return {usedLoss:used,base,tax:base*0.19,net:g-p-base*0.19}}
-function setText(id,val,cls){const el=document.getElementById(id);el.textContent=val;el.className='value '+(cls||'')}
-async function fetchCSV(url){const r=await fetch(url,{cache:'no-store'});return await r.text()}
-function parseHistoryCsv(text,symbolFilter){const rows=parseCSV(text);const data=[];for(let i=1;i<rows.length;i++){const [date,symbol,price]=rows[i];if(!date)continue;if(symbolFilter && normalizeSymbol(symbol)!==normalizeSymbol(symbolFilter))continue;const d=new Date(date);const c=Number(String(price).replace(',', '.'));if(!isNaN(d)&&isFinite(c))data.push({date:d,close:c,symbol})}data.sort((a,b)=>a.date-b.date);return data}
-async function loadRepoHistory(symbol){const text=await fetchCSV(CONFIG.HISTORY_URL);return parseHistoryCsv(text,symbol)}
-async function loadRepoPortfolio(){const text=await fetchCSV(CONFIG.PORTFOLIO_URL);const rows=parseCSV(text);const out=[];for(let i=1;i<rows.length;i++){const [symbol,qty,buy,price,div,com,opened]=rows[i];if(!symbol)continue;out.push({symbol:normalizeSymbol(symbol),qty:Number(qty||0),buy:Number(buy||0),price:Number(price||0),dividends:Number(div||0),commissions:Number(com||0),opened:String(opened||'').toLowerCase()!=='no'})}return out}
-async function loadWatch(){try{const text=await fetchCSV(CONFIG.WATCH_URL);const rows=parseCSV(text);watchData=[];for(let i=1;i<rows.length;i++){const [symbol,target,price,status]=rows[i];if(symbol)watchData.push({symbol:normalizeSymbol(symbol),target:Number(target||0),price:Number(price||0),status:status||''})}}catch(e){watchData=[]}}
-function renderPortfolio(){const tb=document.querySelector('#portfolioTable tbody');tb.innerHTML='';let totalValue=0,totalPnL=0,totalCost=0,totalDiv=0,totalCom=0;portfolioData.forEach(p=>{const current=p.price||p.buy;const invested=p.qty*p.buy+p.commissions;const value=p.qty*current;const pnl=(value+p.dividends-p.commissions)-(p.qty*p.buy);const pct=invested?pnl/invested*100:0;totalValue+=value;totalPnL+=pnl;totalCost+=invested;totalDiv+=p.dividends;totalCom+=p.commissions;const tr=document.createElement('tr');tr.innerHTML=`<td>${p.symbol}</td><td>${p.qty}</td><td>${fmtEUR(p.buy)}</td><td>${fmtEUR(current)}</td><td class="${pnl>=0?'ok':'bad'}">${fmtEUR(pnl)}</td><td>${pct.toFixed(2)}%</td><td>${fmtEUR(p.dividends)}</td><td>${fmtEUR(p.commissions)}</td><td>${p.opened?'<span class="pill green">Abierta</span>':'<span class="pill gray">Cerrada</span>'}</td>`;tb.appendChild(tr)});setText('kpiPortfolioValue',fmtEUR(totalValue),totalValue>=0?'ok':'');setText('kpiPnL',fmtEUR(totalPnL),totalPnL>=0?'ok':'bad');setText('kpiReturnPct',totalCost?fmtPct(totalPnL/totalCost*100):'0,00%','');const tax=taxNet(Math.max(totalPnL,0),Math.max(-totalPnL,0));setText('kpiTax',fmtEUR(tax.tax),tax.tax===0?'ok':'bad');renderTaxTable();}
-function renderWatch(){const tb=document.querySelector('#watchTable tbody');tb.innerHTML='';watchData.forEach(w=>{const tr=document.createElement('tr');const st=w.price>=w.target&&w.target?'Objetivo alcanzado':'En seguimiento';tr.innerHTML=`<td>${w.symbol}</td><td>${fmtEUR(w.target)}</td><td>${fmtEUR(w.price)}</td><td>${st}</td>`;tb.appendChild(tr)})}
-function renderTaxTable(){const tb=document.querySelector('#taxTable tbody');tb.innerHTML='';portfolioData.forEach(p=>{const current=p.price||p.buy;const pnl=(p.qty*current+p.dividends-p.commissions)-(p.qty*p.buy);const gain=Math.max(0,pnl),loss=Math.max(0,-pnl);const tax=taxNet(gain,loss);const tr=document.createElement('tr');tr.innerHTML=`<td>${p.symbol}</td><td>${fmtEUR(gain)}</td><td>${fmtEUR(loss)}</td><td>${fmtEUR(tax.base)}</td><td>${fmtEUR(tax.tax)}</td><td>${fmtEUR(tax.net)}</td>`;tb.appendChild(tr)})}
-function renderCharts(history,benchmark){const labels=history.map(x=>x.date.toISOString().slice(0,10));const close=history.map(x=>x.close);const s20=ma(close,20),s50=ma(close,50),s200=ma(close,200);const ctx=document.getElementById('priceChart');if(priceChart)priceChart.destroy();priceChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Precio',data:close,borderColor:'#2563eb',pointRadius:0,fill:false},{label:'SMA 20',data:s20,borderColor:'#16a34a',pointRadius:0,fill:false},{label:'SMA 50',data:s50,borderColor:'#f59e0b',pointRadius:0,fill:false},{label:'SMA 200',data:s200,borderColor:'#7c3aed',pointRadius:0,fill:false}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{x:{ticks:{maxTicksLimit:8}}}}});if(benchmark&&benchmark.length){const bmap=new Map(benchmark.map(x=>[x.date.toISOString().slice(0,10),x.close]));const ref=labels.map(d=>bmap.get(d)).filter(v=>v!=null);const minLen=Math.min(close.length,ref.length);const baseA=close[close.findIndex(x=>x)],baseB=ref[ref.findIndex(x=>x)];const normA=close.slice(-minLen).map(v=>v/baseA*100);const normB=ref.slice(-minLen).map(v=>v/baseB*100);const lb=labels.slice(-minLen);const c2=document.getElementById('benchmarkChart');if(benchChart)benchChart.destroy();benchChart=new Chart(c2,{type:'line',data:{labels:lb,datasets:[{label:'Valor base 100',data:normA,borderColor:'#2563eb',pointRadius:0,fill:false},{label:'Referencia base 100',data:normB,borderColor:'#dc2626',pointRadius:0,fill:false}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{x:{ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'Base 100'}}}}})}}
-async function fetchAlpha(symbol,days){const url=`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${encodeURIComponent(CONFIG.ALPHA_VANTAGE_API_KEY)}`;const j=await (await fetch(url)).json();const ts=j['Time Series (Daily)']||{};return Object.keys(ts).sort().slice(-days).map(d=>({date:new Date(d),close:Number(ts[d]['4. close'])}))}
-async function fetchFinnhub(symbol,days){const end=Math.floor(Date.now()/1000),start=end-days*86400;const url=`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${start}&to=${end}&token=${encodeURIComponent(CONFIG.FINNHUB_API_KEY)}`;const j=await (await fetch(url)).json();if(j.s!=='ok')return [];return j.t.map((t,i)=>({date:new Date(t*1000),close:Number(j.c[i])}))}
-async function fetchYahoo(symbol,days){const r=await fetch(`${CONFIG.YAHOO_BACKEND_URL}?symbol=${encodeURIComponent(symbol)}&maxRows=${days}`);const j=await r.json();return j.map(x=>({date:new Date(x.date),close:Number(x.close)}))}
-async function loadHistorical(){const source=document.getElementById('sourceSelect').value;const symbol=normalizeSymbol(document.getElementById('symbolInput').value);const bench=normalizeSymbol(document.getElementById('benchmarkInput').value);const days=Number(document.getElementById('daysInput').value||365);let hist=[];if(source==='repoCsv'||source==='googleFinance')hist=await loadRepoHistory(symbol);else if(source==='alphaVantage')hist=await fetchAlpha(symbol,days);else if(source==='finnhub')hist=await fetchFinnhub(symbol,days);else if(source==='yahooBackend')hist=await fetchYahoo(symbol,days);let benchmark=[];if(bench){try{benchmark=await loadRepoHistory(bench)}catch(e){benchmark=[]}}currentHistory=hist;currentBenchmark=benchmark;renderCharts(hist,benchmark);document.getElementById('scenarioResult').innerHTML=`<strong>${symbol}</strong>: ${hist.length} puntos cargados${benchmark.length?` · referencia ${bench}`:''}`}
-async function loadPortfolioFromRepo(){try{portfolioData=await loadRepoPortfolio()}catch(e){portfolioData=[]}renderPortfolio();renderWatch()}
-function simulateSalePortfolio(){const rows=portfolioData.map(p=>{const current=p.price||p.buy;return {symbol:p.symbol,qty:p.qty,buy:p.buy,sell:current}});let gains=0,losses=0;const detail=rows.map(r=>{const pl=(r.sell-r.buy)*r.qty;const g=Math.max(pl,0),l=Math.max(-pl,0);gains+=g;losses+=l;return {symbol:r.symbol,gain:g,loss:l,base:pl}});const tax=taxNet(gains,losses);const tb=document.querySelector('#taxTable tbody');tb.innerHTML='';detail.forEach(d=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${d.symbol}</td><td>${fmtEUR(d.gain)}</td><td>${fmtEUR(d.loss)}</td><td>${fmtEUR(Math.max(0,d.base))}</td><td>${fmtEUR(tax.base?Math.max(0,d.base)*0.19:0)}</td><td>${fmtEUR(d.base - Math.max(0,d.base)*0.19)}</td>`;tb.appendChild(tr)});const sr=document.getElementById('scenarioResult');sr.innerHTML=`<div class='kpi-list'><div class='kpi'><span>Ganancias</span><span>${fmtEUR(gains)}</span></div><div class='kpi'><span>Pérdidas</span><span>${fmtEUR(losses)}</span></div><div class='kpi'><span>Pérdida compensable</span><span>${fmtEUR(tax.usedLoss)}</span></div><div class='kpi'><span>Impuesto</span><span>${fmtEUR(tax.tax)}</span></div><div class='kpi'><span>Neto tras impuestos</span><span>${fmtEUR(tax.net)}</span></div></div>`}
-document.getElementById('loadHistoricalBtn').addEventListener('click',loadHistorical);
-document.getElementById('loadPortfolioBtn').addEventListener('click',loadPortfolioFromRepo);
-document.getElementById('recalcBtn').addEventListener('click',()=>{renderPortfolio();renderWatch()});
-document.getElementById('addWatchBtn').addEventListener('click',()=>{const s=normalizeSymbol(document.getElementById('watchSymbol').value),t=Number(document.getElementById('watchTarget').value||0);if(!s)return;watchData.push({symbol:s,target:t,price:0,status:''});renderWatch()});
-document.getElementById('simulateSaleBtn').addEventListener('click',simulateSalePortfolio);
-document.getElementById('addScenarioBtn').addEventListener('click',()=>{document.getElementById('scenarioResult').innerHTML='<strong>Escenario listo:</strong> usa el histórico cargado para comparar precio actual, medias y referencia base 100.'});
-(async()=>{await loadWatch();await loadPortfolioFromRepo();})();
-</script>
-</body>
+            main {
+                padding: 20px;
+                max-width: 1400px;
+                margin: 0 auto;
+                display: grid;
+                gap: 16px
+            }
+
+            .grid {
+                display: grid;
+                gap: 16px
+            }
+
+            .grid.cols2 {
+                grid-template-columns: repeat(2,minmax(0,1fr))
+            }
+
+            .grid.cols3 {
+                grid-template-columns: repeat(3,minmax(0,1fr))
+            }
+
+            .card {
+                background: var(--card);
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                box-shadow: 0 6px 20px rgba(15,23,42,.05);
+                padding: 16px
+            }
+
+            .card h2,.card h3 {
+                margin: 0 0 12px
+            }
+
+            .muted {
+                color: var(--muted);
+                font-size: 13px
+            }
+
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(4,minmax(0,1fr));
+                gap: 12px
+            }
+
+            .stat {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                padding: 12px;
+                background: #fafafa
+            }
+
+            .stat .label {
+                font-size: 12px;
+                color: var(--muted)
+            }
+
+            .stat .value {
+                font-size: 20px;
+                font-weight: 700;
+                margin-top: 4px
+            }
+
+            .value.ok {
+                color: var(--ok)
+            }
+
+            .value.bad {
+                color: var(--bad)
+            }
+
+            label {
+                display: block;
+                font-size: 13px;
+                margin-bottom: 4px;
+                color: #374151
+            }
+
+            input,select,button,textarea {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: 1px solid #d1d5db;
+                background: #fff;
+                font: inherit
+            }
+
+            button {
+                cursor: pointer;
+                background: var(--pri);
+                color: #fff;
+                border: none;
+                font-weight: 600
+            }
+
+            button.secondary {
+                background: #475569
+            }
+
+            button.ghost {
+                background: #fff;
+                color: #111827;
+                border: 1px solid var(--line)
+            }
+
+            .row {
+                display: grid;
+                grid-template-columns: repeat(4,minmax(0,1fr));
+                gap: 12px
+            }
+
+            .row2 {
+                display: grid;
+                grid-template-columns: repeat(2,minmax(0,1fr));
+                gap: 12px
+            }
+
+            .toolbar {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                align-items: center
+            }
+
+            .toolbar > * {
+                flex: 1 1 180px
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px
+            }
+
+            th,td {
+                border-bottom: 1px solid var(--line);
+                padding: 9px 8px;
+                text-align: right;
+                vertical-align: middle
+            }
+
+            th:first-child,td:first-child {
+                text-align: left
+            }
+
+            tr:hover td {
+                background: #fafafa
+            }
+
+            .nowrap {
+                white-space: nowrap
+            }
+
+            .pill {
+                display: inline-block;
+                padding: 3px 8px;
+                border-radius: 999px;
+                background: #eef2ff;
+                color: #3730a3;
+                font-size: 12px
+            }
+
+            .pill.green {
+                background: #dcfce7;
+                color: #166534
+            }
+
+            .pill.red {
+                background: #fee2e2;
+                color: #991b1b
+            }
+
+            .pill.gray {
+                background: #e5e7eb;
+                color: #374151
+            }
+
+            canvas {
+                max-width: 100%
+            }
+
+            .table-wrap {
+                overflow: auto
+            }
+
+            .two-col {
+                display: grid;
+                grid-template-columns: 1.2fr .8fr;
+                gap: 16px
+            }
+
+            .kpi-list {
+                display: grid;
+                gap: 10px
+            }
+
+            .kpi {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                padding: 10px 12px;
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                background: #fafafa
+            }
+
+            .kpi span:last-child {
+                font-weight: 700
+            }
+
+            .small {
+                font-size: 12px;
+                color: var(--muted)
+            }
+
+            .split {
+                display: grid;
+                grid-template-columns: repeat(2,minmax(0,1fr));
+                gap: 12px
+            }
+
+            .hide {
+                display: none
+            }
+
+            @media (max-width: 1100px) {
+                .grid.cols3,.grid.cols2,.stats,.row,.row2,.two-col,.split {
+                    grid-template-columns:1fr
+                }
+
+                .toolbar > * {
+                    flex-basis: 100%
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Cuadro de mando de inversiones</h1>
+            <p>Histórico, medias móviles, escenarios, comparativa con referencia, seguimiento, simulación fiscal y análisis por posición.</p>
+        </header>
+        <main>
+            <section class="card">
+                <h2>Resumen de cartera</h2>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="label">Valor cartera</div>
+                        <div class="value" id="kpiPortfolioValue">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="label">Ganancia / pérdida</div>
+                        <div class="value" id="kpiPnL">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="label">Rentabilidad %</div>
+                        <div class="value" id="kpiReturnPct">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="label">Coste fiscal estimado</div>
+                        <div class="value" id="kpiTax">-</div>
+                    </div>
+                </div>
+                <p class="muted">El coste fiscal aplica 19% sobre ganancias netas y compensa pérdidas hasta el máximo del beneficio, nunca por encima de la ganancia.</p>
+            </section>
+            <section class="card">
+                <div class="toolbar">
+                    <div>
+                        <label>Fuente de datos</label>
+                        <select id="sourceSelect">
+                            <option value="repoCsv">CSV en GitHub</option>
+                            <option value="googleFinance">Google Finance via Sheet CSV</option>
+                            <option value="alphaVantage">Alpha Vantage</option>
+                            <option value="finnhub">Finnhub</option>
+                            <option value="yahooBackend">Yahoo backend</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Ticker / símbolo</label>
+                        <input id="symbolInput" placeholder="ITX.MC / SAN.MC / AAPL"/>
+                    </div>
+                    <div>
+                        <label>Referencia</label>
+                        <input id="benchmarkInput" placeholder="IBEX / SPY / ^GSPC"/>
+                    </div>
+                    <div>
+                        <label>Días históricos</label>
+                        <input id="daysInput" type="number" value="365" min="30" max="5000"/>
+                    </div>
+                </div>
+                <div class="toolbar" style="margin-top:12px">
+                    <div>
+                        <button id="loadHistoricalBtn">Cargar histórico</button>
+                    </div>
+                    <div>
+                        <button id="loadPortfolioBtn" class="secondary">Cargar cartera CSV</button>
+                    </div>
+                    <div>
+                        <button id="recalcBtn" class="ghost">Recalcular KPI</button>
+                    </div>
+                    <div>
+                        <button id="addScenarioBtn" class="ghost">Añadir escenario</button>
+                    </div>
+                </div>
+                <p class="small">Configura las URLs en el bloque CONFIG del código. Para GitHub Pages se recomienda CSV/JSON estáticos en el repositorio.</p>
+            </section>
+            <section class="grid cols2">
+                <div class="card">
+                    <h2>Evolución histórica</h2>
+                    <canvas id="priceChart" height="110"></canvas>
+                </div>
+                <div class="card">
+                    <h2>Comparativa con referencia</h2>
+                    <canvas id="benchmarkChart" height="110"></canvas>
+                </div>
+            </section>
+            <section class="grid cols2">
+                <div class="card">
+                    <h2>Posiciones y operaciones</h2>
+                    <div class="table-wrap">
+                        <table id="portfolioTable">
+                            <thead>
+                                <tr>
+                                    <th>Valor</th>
+                                    <th>Cantidad</th>
+                                    <th>Compra media</th>
+                                    <th>Precio actual</th>
+                                    <th>PnL</th>
+                                    <th>PnL %</th>
+                                    <th>Dividendos</th>
+                                    <th>Comisiones</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Seguimiento y escenarios</h2>
+                    <div class="split">
+                        <div>
+                            <label>Ticker vigilancia</label>
+                            <input id="watchSymbol" placeholder="IBE.MC"/>
+                        </div>
+                        <div>
+                            <label>Precio objetivo</label>
+                            <input id="watchTarget" type="number" step="0.0001"/>
+                        </div>
+                    </div>
+                    <div class="toolbar" style="margin-top:12px">
+                        <button id="addWatchBtn">Añadir seguimiento</button>
+                        <button id="simulateSaleBtn" class="secondary">Simular venta cartera</button>
+                    </div>
+                    <div class="table-wrap" style="margin-top:12px">
+                        <table id="watchTable">
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Objetivo</th>
+                                    <th>Precio</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div id="scenarioResult" class="card" style="margin-top:12px;background:#fafafa"></div>
+                </div>
+            </section>
+            <section class="card">
+                <div class="flex-between">
+                    <h2>Simulación fiscal</h2>
+                    <span class="pill gray">19% beneficio neto</span>
+                </div>
+                <div class="table-wrap">
+                    <table id="taxTable">
+                        <thead>
+                            <tr>
+                                <th>Valor</th>
+                                <th>Ganancia</th>
+                                <th>Pérdida</th>
+                                <th>Base neta</th>
+                                <th>Impuesto</th>
+                                <th>Resultado neto</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="card">
+                <h2>Configuración de repositorio</h2>
+                <div class="row2">
+                    <div>
+                        <label>URL histórico CSV/JSON</label>
+                        <input id="historyUrlInput" placeholder="https://elgranmontoya.github.io/lasaccionesdefernando/data/historico.csv"/>
+                    </div>
+                    <div>
+                        <label>URL cartera CSV/JSON</label>
+                        <input id="portfolioUrlInput" placeholder="https://elgranmontoya.github.io/lasaccionesdefernando/data/cartera.csv"/>
+                    </div>
+                </div>
+                <div class="row2" style="margin-top:12px">
+                    <div>
+                        <label>API key Alpha Vantage</label>
+                        <input id="alphaKeyInput" placeholder="6ZRWPNHBJPU7RNRV"/>
+                    </div>
+                    <div>
+                        <label>API key Finnhub</label>
+                        <input id="finnhubKeyInput" placeholder="d8gos69r01qhjpmp10h0"/>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <script>
+            const CONFIG = {
+                // <<< PON LA URL DE TU CSV/JSON EN EL REPO DE GITHUB PAGES
+                HISTORY_URL: 'data/historico.csv',
+                PORTFOLIO_URL: 'data/cartera.csv',
+                WATCH_URL: 'data/seguimiento.csv',
+                // <<< PON AQUÍ TUS API KEYS SI VAS A LLAMAR DESDE FRONTEND
+                ALPHA_VANTAGE_API_KEY: '6ZRWPNHBJPU7RNRV',
+                FINNHUB_API_KEY: 'd8gos69r01qhjpmp10h0',
+                // <<< SI USAS BACKEND PROPIO PARA YAHOO, PON SU URL
+                YAHOO_BACKEND_URL: 'https://yf-backend-m3ik.onrender.com/yahoo-history'
+            };
+            let priceChart, benchChart;
+            let portfolioData = [];
+            let watchData = [];
+            let currentHistory = [];
+            let currentBenchmark = [];
+            function fmtEUR(v) {
+                return new Intl.NumberFormat('es-ES',{
+                    style: 'currency',
+                    currency: 'EUR'
+                }).format(v || 0)
+            }
+            function fmtPct(v) {
+                return new Intl.NumberFormat('es-ES',{
+                    style: 'percent',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format((v || 0) / 100)
+            }
+            function parseCSV(text) {
+                const rows = text.trim().split(/\r?\n/).map(r => r.split(','));
+                return rows
+            }
+            function normalizeSymbol(s) {
+                return (s || '').trim()
+            }
+            function ma(vals, n) {
+                return vals.map( (_, i) => i < n - 1 ? null : vals.slice(i - n + 1, i + 1).reduce( (a, b) => a + b, 0) / n)
+            }
+            function taxNet(g, p) {
+                const used = Math.min(g, p);
+                const base = Math.max(0, g - used);
+                return {
+                    usedLoss: used,
+                    base,
+                    tax: base * 0.19,
+                    net: g - p - base * 0.19
+                }
+            }
+            function setText(id, val, cls) {
+                const el = document.getElementById(id);
+                el.textContent = val;
+                el.className = 'value ' + (cls || '')
+            }
+            async function fetchCSV(url) {
+                const r = await fetch(url, {
+                    cache: 'no-store'
+                });
+                return await r.text()
+            }
+            function parseHistoryCsv(text, symbolFilter) {
+                const rows = parseCSV(text);
+                const data = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const [date,symbol,price] = rows[i];
+                    if (!date)
+                        continue;
+                    if (symbolFilter && normalizeSymbol(symbol) !== normalizeSymbol(symbolFilter))
+                        continue;
+                    const d = new Date(date);
+                    const c = Number(String(price).replace(',', '.'));
+                    if (!isNaN(d) && isFinite(c))
+                        data.push({
+                            date: d,
+                            close: c,
+                            symbol
+                        })
+                }
+                data.sort( (a, b) => a.date - b.date);
+                return data
+            }
+            async function loadRepoHistory(symbol) {
+                const text = await fetchCSV(CONFIG.HISTORY_URL);
+                return parseHistoryCsv(text, symbol)
+            }
+            async function loadRepoPortfolio() {
+                const text = await fetchCSV(CONFIG.PORTFOLIO_URL);
+                const rows = parseCSV(text);
+                const out = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const [symbol,qty,buy,price,div,com,opened] = rows[i];
+                    if (!symbol)
+                        continue;
+                    out.push({
+                        symbol: normalizeSymbol(symbol),
+                        qty: Number(qty || 0),
+                        buy: Number(buy || 0),
+                        price: Number(price || 0),
+                        dividends: Number(div || 0),
+                        commissions: Number(com || 0),
+                        opened: String(opened || '').toLowerCase() !== 'no'
+                    })
+                }
+                return out
+            }
+            async function loadWatch() {
+                try {
+                    const text = await fetchCSV(CONFIG.WATCH_URL);
+                    const rows = parseCSV(text);
+                    watchData = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        const [symbol,target,price,status] = rows[i];
+                        if (symbol)
+                            watchData.push({
+                                symbol: normalizeSymbol(symbol),
+                                target: Number(target || 0),
+                                price: Number(price || 0),
+                                status: status || ''
+                            })
+                    }
+                } catch (e) {
+                    watchData = []
+                }
+            }
+            function renderPortfolio() {
+                const tb = document.querySelector('#portfolioTable tbody');
+                tb.innerHTML = '';
+                let totalValue = 0
+                  , totalPnL = 0
+                  , totalCost = 0
+                  , totalDiv = 0
+                  , totalCom = 0;
+                portfolioData.forEach(p => {
+                    const current = p.price || p.buy;
+                    const invested = p.qty * p.buy + p.commissions;
+                    const value = p.qty * current;
+                    const pnl = (value + p.dividends - p.commissions) - (p.qty * p.buy);
+                    const pct = invested ? pnl / invested * 100 : 0;
+                    totalValue += value;
+                    totalPnL += pnl;
+                    totalCost += invested;
+                    totalDiv += p.dividends;
+                    totalCom += p.commissions;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${p.symbol}</td><td>${p.qty}</td><td>${fmtEUR(p.buy)}</td><td>${fmtEUR(current)}</td><td class="${pnl >= 0 ? 'ok' : 'bad'}">${fmtEUR(pnl)}</td><td>${pct.toFixed(2)}%</td><td>${fmtEUR(p.dividends)}</td><td>${fmtEUR(p.commissions)}</td><td>${p.opened ? '<span class="pill green">Abierta</span>' : '<span class="pill gray">Cerrada</span>'}</td>`;
+                    tb.appendChild(tr)
+                }
+                );
+                setText('kpiPortfolioValue', fmtEUR(totalValue), totalValue >= 0 ? 'ok' : '');
+                setText('kpiPnL', fmtEUR(totalPnL), totalPnL >= 0 ? 'ok' : 'bad');
+                setText('kpiReturnPct', totalCost ? fmtPct(totalPnL / totalCost * 100) : '0,00%', '');
+                const tax = taxNet(Math.max(totalPnL, 0), Math.max(-totalPnL, 0));
+                setText('kpiTax', fmtEUR(tax.tax), tax.tax === 0 ? 'ok' : 'bad');
+                renderTaxTable();
+            }
+            function renderWatch() {
+                const tb = document.querySelector('#watchTable tbody');
+                tb.innerHTML = '';
+                watchData.forEach(w => {
+                    const tr = document.createElement('tr');
+                    const st = w.price >= w.target && w.target ? 'Objetivo alcanzado' : 'En seguimiento';
+                    tr.innerHTML = `<td>${w.symbol}</td><td>${fmtEUR(w.target)}</td><td>${fmtEUR(w.price)}</td><td>${st}</td>`;
+                    tb.appendChild(tr)
+                }
+                )
+            }
+            function renderTaxTable() {
+                const tb = document.querySelector('#taxTable tbody');
+                tb.innerHTML = '';
+                portfolioData.forEach(p => {
+                    const current = p.price || p.buy;
+                    const pnl = (p.qty * current + p.dividends - p.commissions) - (p.qty * p.buy);
+                    const gain = Math.max(0, pnl)
+                      , loss = Math.max(0, -pnl);
+                    const tax = taxNet(gain, loss);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${p.symbol}</td><td>${fmtEUR(gain)}</td><td>${fmtEUR(loss)}</td><td>${fmtEUR(tax.base)}</td><td>${fmtEUR(tax.tax)}</td><td>${fmtEUR(tax.net)}</td>`;
+                    tb.appendChild(tr)
+                }
+                )
+            }
+            function renderCharts(history, benchmark) {
+                const labels = history.map(x => x.date.toISOString().slice(0, 10));
+                const close = history.map(x => x.close);
+                const s20 = ma(close, 20)
+                  , s50 = ma(close, 50)
+                  , s200 = ma(close, 200);
+                const ctx = document.getElementById('priceChart');
+                if (priceChart)
+                    priceChart.destroy();
+                priceChart = new Chart(ctx,{
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Precio',
+                            data: close,
+                            borderColor: '#2563eb',
+                            pointRadius: 0,
+                            fill: false
+                        }, {
+                            label: 'SMA 20',
+                            data: s20,
+                            borderColor: '#16a34a',
+                            pointRadius: 0,
+                            fill: false
+                        }, {
+                            label: 'SMA 50',
+                            data: s50,
+                            borderColor: '#f59e0b',
+                            pointRadius: 0,
+                            fill: false
+                        }, {
+                            label: 'SMA 200',
+                            data: s200,
+                            borderColor: '#7c3aed',
+                            pointRadius: 0,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8
+                                }
+                            }
+                        }
+                    }
+                });
+                if (benchmark && benchmark.length) {
+                    const bmap = new Map(benchmark.map(x => [x.date.toISOString().slice(0, 10), x.close]));
+                    const ref = labels.map(d => bmap.get(d)).filter(v => v != null);
+                    const minLen = Math.min(close.length, ref.length);
+                    const baseA = close[close.findIndex(x => x)]
+                      , baseB = ref[ref.findIndex(x => x)];
+                    const normA = close.slice(-minLen).map(v => v / baseA * 100);
+                    const normB = ref.slice(-minLen).map(v => v / baseB * 100);
+                    const lb = labels.slice(-minLen);
+                    const c2 = document.getElementById('benchmarkChart');
+                    if (benchChart)
+                        benchChart.destroy();
+                    benchChart = new Chart(c2,{
+                        type: 'line',
+                        data: {
+                            labels: lb,
+                            datasets: [{
+                                label: 'Valor base 100',
+                                data: normA,
+                                borderColor: '#2563eb',
+                                pointRadius: 0,
+                                fill: false
+                            }, {
+                                label: 'Referencia base 100',
+                                data: normB,
+                                borderColor: '#dc2626',
+                                pointRadius: 0,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        maxTicksLimit: 8
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Base 100'
+                                    }
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+            async function fetchAlpha(symbol, days) {
+                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${encodeURIComponent(CONFIG.ALPHA_VANTAGE_API_KEY)}`;
+                const j = await (await fetch(url)).json();
+                const ts = j['Time Series (Daily)'] || {};
+                return Object.keys(ts).sort().slice(-days).map(d => ({
+                    date: new Date(d),
+                    close: Number(ts[d]['4. close'])
+                }))
+            }
+            async function fetchFinnhub(symbol, days) {
+                const end = Math.floor(Date.now() / 1000)
+                  , start = end - days * 86400;
+                const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${start}&to=${end}&token=${encodeURIComponent(CONFIG.FINNHUB_API_KEY)}`;
+                const j = await (await fetch(url)).json();
+                if (j.s !== 'ok')
+                    return [];
+                return j.t.map( (t, i) => ({
+                    date: new Date(t * 1000),
+                    close: Number(j.c[i])
+                }))
+            }
+            async function fetchYahoo(symbol, days) {
+                const r = await fetch(`${CONFIG.YAHOO_BACKEND_URL}?symbol=${encodeURIComponent(symbol)}&maxRows=${days}`);
+                const j = await r.json();
+                return j.map(x => ({
+                    date: new Date(x.date),
+                    close: Number(x.close)
+                }))
+            }
+            async function loadHistorical() {
+                const source = document.getElementById('sourceSelect').value;
+                const symbol = normalizeSymbol(document.getElementById('symbolInput').value);
+                const bench = normalizeSymbol(document.getElementById('benchmarkInput').value);
+                const days = Number(document.getElementById('daysInput').value || 365);
+                let hist = [];
+                if (source === 'repoCsv' || source === 'googleFinance')
+                    hist = await loadRepoHistory(symbol);
+                else if (source === 'alphaVantage')
+                    hist = await fetchAlpha(symbol, days);
+                else if (source === 'finnhub')
+                    hist = await fetchFinnhub(symbol, days);
+                else if (source === 'yahooBackend')
+                    hist = await fetchYahoo(symbol, days);
+                let benchmark = [];
+                if (bench) {
+                    try {
+                        benchmark = await loadRepoHistory(bench)
+                    } catch (e) {
+                        benchmark = []
+                    }
+                }
+                currentHistory = hist;
+                currentBenchmark = benchmark;
+                renderCharts(hist, benchmark);
+                document.getElementById('scenarioResult').innerHTML = `<strong>${symbol}</strong>: ${hist.length} puntos cargados${benchmark.length ? ` · referencia ${bench}` : ''}`
+            }
+            async function loadPortfolioFromRepo() {
+                try {
+                    portfolioData = await loadRepoPortfolio()
+                } catch (e) {
+                    portfolioData = []
+                }
+                renderPortfolio();
+                renderWatch()
+            }
+            function simulateSalePortfolio() {
+                const rows = portfolioData.map(p => {
+                    const current = p.price || p.buy;
+                    return {
+                        symbol: p.symbol,
+                        qty: p.qty,
+                        buy: p.buy,
+                        sell: current
+                    }
+                }
+                );
+                let gains = 0
+                  , losses = 0;
+                const detail = rows.map(r => {
+                    const pl = (r.sell - r.buy) * r.qty;
+                    const g = Math.max(pl, 0)
+                      , l = Math.max(-pl, 0);
+                    gains += g;
+                    losses += l;
+                    return {
+                        symbol: r.symbol,
+                        gain: g,
+                        loss: l,
+                        base: pl
+                    }
+                }
+                );
+                const tax = taxNet(gains, losses);
+                const tb = document.querySelector('#taxTable tbody');
+                tb.innerHTML = '';
+                detail.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${d.symbol}</td><td>${fmtEUR(d.gain)}</td><td>${fmtEUR(d.loss)}</td><td>${fmtEUR(Math.max(0, d.base))}</td><td>${fmtEUR(tax.base ? Math.max(0, d.base) * 0.19 : 0)}</td><td>${fmtEUR(d.base - Math.max(0, d.base) * 0.19)}</td>`;
+                    tb.appendChild(tr)
+                }
+                );
+                const sr = document.getElementById('scenarioResult');
+                sr.innerHTML = `<div class='kpi-list'><div class='kpi'><span>Ganancias</span><span>${fmtEUR(gains)}</span></div><div class='kpi'><span>Pérdidas</span><span>${fmtEUR(losses)}</span></div><div class='kpi'><span>Pérdida compensable</span><span>${fmtEUR(tax.usedLoss)}</span></div><div class='kpi'><span>Impuesto</span><span>${fmtEUR(tax.tax)}</span></div><div class='kpi'><span>Neto tras impuestos</span><span>${fmtEUR(tax.net)}</span></div></div>`
+            }
+            document.getElementById('loadHistoricalBtn').addEventListener('click', loadHistorical);
+            document.getElementById('loadPortfolioBtn').addEventListener('click', loadPortfolioFromRepo);
+            document.getElementById('recalcBtn').addEventListener('click', () => {
+                renderPortfolio();
+                renderWatch()
+            }
+            );
+            document.getElementById('addWatchBtn').addEventListener('click', () => {
+                const s = normalizeSymbol(document.getElementById('watchSymbol').value)
+                  , t = Number(document.getElementById('watchTarget').value || 0);
+                if (!s)
+                    return;
+                watchData.push({
+                    symbol: s,
+                    target: t,
+                    price: 0,
+                    status: ''
+                });
+                renderWatch()
+            }
+            );
+            document.getElementById('simulateSaleBtn').addEventListener('click', simulateSalePortfolio);
+            document.getElementById('addScenarioBtn').addEventListener('click', () => {
+                document.getElementById('scenarioResult').innerHTML = '<strong>Escenario listo:</strong> usa el histórico cargado para comparar precio actual, medias y referencia base 100.'
+            }
+            );
+            (async () => {
+                await loadWatch();
+                await loadPortfolioFromRepo();
+            }
+            )();
+        </script>
+    </body>
 </html>
