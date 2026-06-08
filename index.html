@@ -1,893 +1,170 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta charset="UTF-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <title>Cuadro de mando inversión v2</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <style>
-            :root {
-                --bg: #f5f7fb;
-                --card: #fff;
-                --text: #1f2937;
-                --muted: #6b7280;
-                --pri: #2563eb;
-                --ok: #16a34a;
-                --bad: #dc2626;
-                --line: #e5e7eb
-            }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cuadro de mando inversiones v3</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --text-xs:clamp(.75rem,.7rem + .25vw,.875rem);--text-sm:clamp(.875rem,.8rem + .35vw,1rem);--text-base:clamp(1rem,.95rem + .25vw,1.125rem);--text-lg:clamp(1.125rem,1rem + .75vw,1.5rem);--text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+      --space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;--space-10:2.5rem;--space-12:3rem;--space-16:4rem;
+      --bg:#f7f6f2;--surface:#fbfbf9;--surface2:#f3f0ec;--text:#28251d;--muted:#7a7974;--border:#d4d1ca;--primary:#01696f;--ok:#437a22;--bad:#a12c7b;--shadow:0 12px 32px rgba(40,37,29,.08);--radius:16px;--radius2:12px;--transition:180ms cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"]{--bg:#171614;--surface:#1c1b19;--surface2:#22211f;--text:#cdccca;--muted:#797876;--border:#393836;--primary:#4f98a3;--ok:#6daa45;--bad:#d163a7;--shadow:0 12px 32px rgba(0,0,0,.4)}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;min-height:100dvh;font-family:Satoshi,system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--text-base);line-height:1.6} img,svg,canvas{max-width:100%;display:block}
+    a{color:inherit} button,input,select{font:inherit;color:inherit} button{cursor:pointer;border:0;background:none}
+    .skip{position:absolute;left:-999px;top:auto}.skip:focus{left:var(--space-4);top:var(--space-4);background:var(--surface);padding:var(--space-2) var(--space-3);border:1px solid var(--border);border-radius:999px;z-index:20}
+    header{position:sticky;top:0;background:color-mix(in oklab,var(--bg) 86%, transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);z-index:10}
+    .wrap{max-width:1280px;margin:0 auto;padding:var(--space-4)}
+    .top{display:flex;justify-content:space-between;gap:var(--space-4);align-items:center;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:var(--space-3)}
+    .logo{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);display:grid;place-items:center;background:var(--surface)}
+    h1,h2,h3{line-height:1.15;margin:0} h1{font-size:var(--text-xl)} h2{font-size:var(--text-lg)} h3{font-size:var(--text-base)}
+    .muted{color:var(--muted);font-size:var(--text-sm)} .tiny{color:var(--muted);font-size:var(--text-xs)}
+    main{max-width:1280px;margin:0 auto;padding:var(--space-4);display:grid;gap:var(--space-4)}
+    .grid{display:grid;gap:var(--space-4)} .cols2{grid-template-columns:repeat(2,minmax(0,1fr))} .cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:var(--space-4)}
+    .stat{padding:var(--space-4);border:1px solid var(--border);border-radius:var(--radius2);background:var(--surface2)}
+    .stat .k{font-size:var(--text-xs);color:var(--muted)} .stat .v{font-size:var(--text-lg);font-weight:700;margin-top:var(--space-2)} .ok{color:var(--ok)} .bad{color:var(--bad)}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4)}
+    .toolbar,.row{display:grid;gap:var(--space-3)} .toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}
+    label{display:block;font-size:var(--text-sm);margin-bottom:var(--space-2)} input,select{width:100%;padding:var(--space-3);border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+    .btn{padding:var(--space-3) var(--space-4);border-radius:12px;background:var(--primary);color:#fff;font-weight:700;min-height:44px} .btn.secondary{background:#475569} .btn.ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+    .pill{display:inline-flex;align-items:center;gap:.4rem;padding:.2rem .55rem;border-radius:999px;font-size:var(--text-xs);border:1px solid var(--border);background:var(--surface2)}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius2)} table{width:100%;border-collapse:collapse;font-size:var(--text-sm)} th,td{padding:var(--space-3);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap} th:first-child,td:first-child{text-align:left}
+    .section-head{display:flex;justify-content:space-between;gap:var(--space-3);align-items:end;flex-wrap:wrap;margin-bottom:var(--space-3)}
+    .split{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--space-4)}
+    .badge{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:color-mix(in oklab,var(--primary) 10%, var(--surface));color:var(--primary);font-size:var(--text-xs)}
+    .box{padding:var(--space-3);border:1px dashed var(--border);border-radius:var(--radius2);background:var(--surface2)}
+    .scenario{display:grid;gap:var(--space-3)}
+    .formula{font-size:var(--text-sm);color:var(--muted)}
+    canvas{max-height:360px}
+    @media (max-width:1100px){.stats,.toolbar,.cols2,.cols3,.split{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<a class="skip" href="#content">Saltar al contenido</a>
+<header>
+  <div class="wrap top">
+    <div class="brand">
+      <div class="logo" aria-label="Logo del cuadro de mando">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15l4-4 3 3 6-7"/></svg>
+      </div>
+      <div>
+        <h1>Cuadro de mando inversiones v3</h1>
+        <div class="muted">Operaciones, cartera, seguimiento, histórico y simulación fiscal.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap">
+      <span class="pill">GitHub Pages + Render</span>
+      <button id="themeBtn" class="btn ghost" type="button" aria-label="Cambiar tema">Tema</button>
+    </div>
+  </div>
+</header>
+<main id="content">
+  <section class="card">
+    <div class="section-head"><div><h2>Resumen</h2><div class="muted">La cartera se calcula desde operaciones.csv.</div></div></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Valor cartera</div><div class="v" id="kpiValue">-</div></div>
+      <div class="stat"><div class="k">P/L</div><div class="v" id="kpiPnl">-</div></div>
+      <div class="stat"><div class="k">Rentabilidad %</div><div class="v" id="kpiPct">-</div></div>
+      <div class="stat"><div class="k">Impuesto estimado</div><div class="v" id="kpiTax">-</div></div>
+    </div>
+  </section>
 
-            body {
-                margin: 0;
-                font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-                background: var(--bg);
-                color: var(--text)
-            }
+  <section class="grid cols2">
+    <div class="card">
+      <div class="section-head"><div><h2>Histórico</h2><div class="muted">Precio + medias móviles.</div></div></div>
+      <div class="toolbar">
+        <div><label>Fuente</label><select id="source"><option value="repo">CSV repo</option><option value="alpha">Alpha Vantage</option><option value="finnhub">Finnhub</option><option value="yahoo">Yahoo backend</option></select></div>
+        <div><label>Símbolo</label><input id="symbol" placeholder="ITX.MC"></div>
+        <div><label>Referencia</label><input id="benchmark" placeholder="IBEX, SPY, ^GSPC"></div>
+        <div><label>Días</label><input id="days" type="number" value="365" min="30" max="5000"></div>
+      </div>
+      <div class="toolbar" style="margin-top:var(--space-3)"><button id="loadHistory" class="btn" type="button">Cargar histórico</button><button id="loadRepo" class="btn secondary" type="button">Cargar cartera + seguimiento</button><button id="simulate" class="btn ghost" type="button">Simular venta cartera</button><button id="addWatch" class="btn ghost" type="button">Añadir seguimiento</button></div>
+      <div style="margin-top:var(--space-4)"><canvas id="priceChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-head"><div><h2>Escenario fiscal</h2><div class="muted">Ganancias tributan al 19% y pérdidas compensan hasta el beneficio.</div></div></div>
+      <div class="scenario">
+        <div class="box" id="scenarioBox">Carga la cartera o simula una venta.</div>
+        <div class="formula">Base imponible = max(0, ganancias - min(ganancias, pérdidas)). Impuesto = base imponible × 0,19</div>
+      </div>
+      <div style="margin-top:var(--space-4)"><canvas id="benchChart"></canvas></div>
+    </div>
+  </section>
 
-            header {
-                padding: 20px 24px;
-                background: linear-gradient(135deg,#1d4ed8,#0f172a);
-                color: #fff
-            }
+  <section class="grid cols2">
+    <div class="card">
+      <div class="section-head"><div><h2>Operaciones</h2><div class="muted">Fuente: operaciones.csv</div></div></div>
+      <div class="table-wrap"><table id="opsTable"><thead><tr><th>Fecha</th><th>Símbolo</th><th>Tipo</th><th>Cant.</th><th>Precio</th><th>Comisión</th><th>Dividendo</th><th>F. fiscal</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="section-head"><div><h2>Cartera</h2><div class="muted">Agregada desde operaciones.</div></div></div>
+      <div class="table-wrap"><table id="portfolioTable"><thead><tr><th>Símbolo</th><th>Cant.</th><th>Compra media</th><th>Actual</th><th>Div.</th><th>Com.</th><th>Abierta</th><th>P/L</th><th>P/L %</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
 
-            header h1 {
-                margin: 0 0 6px;
-                font-size: 24px
-            }
+  <section class="grid cols2">
+    <div class="card">
+      <div class="section-head"><div><h2>Seguimiento</h2><div class="muted">Fuente: seguimiento.csv</div></div></div>
+      <div class="toolbar">
+        <div><label>Símbolo</label><input id="watchSymbol" placeholder="IBE.MC"></div>
+        <div><label>Objetivo</label><input id="watchTarget" type="number" step="0.0001"></div>
+        <div><label>Precio</label><input id="watchPrice" type="number" step="0.0001"></div>
+        <div><label>Estado</label><input id="watchStatus" placeholder="comprar si rompe"></div>
+      </div>
+      <div class="table-wrap" style="margin-top:var(--space-4)"><table id="watchTable"><thead><tr><th>Símbolo</th><th>Objetivo</th><th>Precio</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="section-head"><div><h2>Campos CSV</h2><div class="muted">Qué debe tener cada fichero.</div></div></div>
+      <div class="box">
+        <strong>operaciones.csv</strong><br>
+        <span class="tiny">date,symbol,type,qty,price,fees,dividend,tax</span><br><br>
+        <strong>cartera.csv</strong><br>
+        <span class="tiny">symbol,qty,buy,price,div,com,opened</span><br><br>
+        <strong>seguimiento.csv</strong><br>
+        <span class="tiny">symbol,target,price,status</span><br><br>
+        <strong>historico.csv</strong><br>
+        <span class="tiny">date,symbol,close</span>
+      </div>
+    </div>
+  </section>
 
-            header p {
-                margin: 0;
-                color: #dbeafe
-            }
-
-            main {
-                padding: 20px;
-                max-width: 1400px;
-                margin: 0 auto;
-                display: grid;
-                gap: 16px
-            }
-
-            .grid {
-                display: grid;
-                gap: 16px
-            }
-
-            .grid.cols2 {
-                grid-template-columns: repeat(2,minmax(0,1fr))
-            }
-
-            .grid.cols3 {
-                grid-template-columns: repeat(3,minmax(0,1fr))
-            }
-
-            .card {
-                background: var(--card);
-                border: 1px solid var(--line);
-                border-radius: 14px;
-                box-shadow: 0 6px 20px rgba(15,23,42,.05);
-                padding: 16px
-            }
-
-            .card h2,.card h3 {
-                margin: 0 0 12px
-            }
-
-            .muted {
-                color: var(--muted);
-                font-size: 13px
-            }
-
-            .stats {
-                display: grid;
-                grid-template-columns: repeat(4,minmax(0,1fr));
-                gap: 12px
-            }
-
-            .stat {
-                border: 1px solid var(--line);
-                border-radius: 12px;
-                padding: 12px;
-                background: #fafafa
-            }
-
-            .stat .label {
-                font-size: 12px;
-                color: var(--muted)
-            }
-
-            .stat .value {
-                font-size: 20px;
-                font-weight: 700;
-                margin-top: 4px
-            }
-
-            .value.ok {
-                color: var(--ok)
-            }
-
-            .value.bad {
-                color: var(--bad)
-            }
-
-            label {
-                display: block;
-                font-size: 13px;
-                margin-bottom: 4px;
-                color: #374151
-            }
-
-            input,select,button,textarea {
-                width: 100%;
-                box-sizing: border-box;
-                padding: 10px 12px;
-                border-radius: 10px;
-                border: 1px solid #d1d5db;
-                background: #fff;
-                font: inherit
-            }
-
-            button {
-                cursor: pointer;
-                background: var(--pri);
-                color: #fff;
-                border: none;
-                font-weight: 600
-            }
-
-            button.secondary {
-                background: #475569
-            }
-
-            button.ghost {
-                background: #fff;
-                color: #111827;
-                border: 1px solid var(--line)
-            }
-
-            .row {
-                display: grid;
-                grid-template-columns: repeat(4,minmax(0,1fr));
-                gap: 12px
-            }
-
-            .row2 {
-                display: grid;
-                grid-template-columns: repeat(2,minmax(0,1fr));
-                gap: 12px
-            }
-
-            .toolbar {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                align-items: center
-            }
-
-            .toolbar > * {
-                flex: 1 1 180px
-            }
-
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 13px
-            }
-
-            th,td {
-                border-bottom: 1px solid var(--line);
-                padding: 9px 8px;
-                text-align: right;
-                vertical-align: middle
-            }
-
-            th:first-child,td:first-child {
-                text-align: left
-            }
-
-            tr:hover td {
-                background: #fafafa
-            }
-
-            .nowrap {
-                white-space: nowrap
-            }
-
-            .pill {
-                display: inline-block;
-                padding: 3px 8px;
-                border-radius: 999px;
-                background: #eef2ff;
-                color: #3730a3;
-                font-size: 12px
-            }
-
-            .pill.green {
-                background: #dcfce7;
-                color: #166534
-            }
-
-            .pill.red {
-                background: #fee2e2;
-                color: #991b1b
-            }
-
-            .pill.gray {
-                background: #e5e7eb;
-                color: #374151
-            }
-
-            canvas {
-                max-width: 100%
-            }
-
-            .table-wrap {
-                overflow: auto
-            }
-
-            .two-col {
-                display: grid;
-                grid-template-columns: 1.2fr .8fr;
-                gap: 16px
-            }
-
-            .kpi-list {
-                display: grid;
-                gap: 10px
-            }
-
-            .kpi {
-                display: flex;
-                justify-content: space-between;
-                gap: 10px;
-                padding: 10px 12px;
-                border: 1px solid var(--line);
-                border-radius: 10px;
-                background: #fafafa
-            }
-
-            .kpi span:last-child {
-                font-weight: 700
-            }
-
-            .small {
-                font-size: 12px;
-                color: var(--muted)
-            }
-
-            .split {
-                display: grid;
-                grid-template-columns: repeat(2,minmax(0,1fr));
-                gap: 12px
-            }
-
-            .hide {
-                display: none
-            }
-
-            @media (max-width: 1100px) {
-                .grid.cols3,.grid.cols2,.stats,.row,.row2,.two-col,.split {
-                    grid-template-columns:1fr
-                }
-
-                .toolbar > * {
-                    flex-basis: 100%
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <header>
-            <h1>Cuadro de mando de inversiones</h1>
-            <p>Histórico, medias móviles, escenarios, comparativa con referencia, seguimiento, simulación fiscal y análisis por posición.</p>
-        </header>
-        <main>
-            <section class="card">
-                <h2>Resumen de cartera</h2>
-                <div class="stats">
-                    <div class="stat">
-                        <div class="label">Valor cartera</div>
-                        <div class="value" id="kpiPortfolioValue">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="label">Ganancia / pérdida</div>
-                        <div class="value" id="kpiPnL">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="label">Rentabilidad %</div>
-                        <div class="value" id="kpiReturnPct">-</div>
-                    </div>
-                    <div class="stat">
-                        <div class="label">Coste fiscal estimado</div>
-                        <div class="value" id="kpiTax">-</div>
-                    </div>
-                </div>
-                <p class="muted">El coste fiscal aplica 19% sobre ganancias netas y compensa pérdidas hasta el máximo del beneficio, nunca por encima de la ganancia.</p>
-            </section>
-            <section class="card">
-                <div class="toolbar">
-                    <div>
-                        <label>Fuente de datos</label>
-                        <select id="sourceSelect">
-                            <option value="repoCsv">CSV en GitHub</option>
-                            <option value="googleFinance">Google Finance via Sheet CSV</option>
-                            <option value="alphaVantage">Alpha Vantage</option>
-                            <option value="finnhub">Finnhub</option>
-                            <option value="yahooBackend">Yahoo backend</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Ticker / símbolo</label>
-                        <input id="symbolInput" placeholder="ITX.MC / SAN.MC / AAPL"/>
-                    </div>
-                    <div>
-                        <label>Referencia</label>
-                        <input id="benchmarkInput" placeholder="IBEX / SPY / ^GSPC"/>
-                    </div>
-                    <div>
-                        <label>Días históricos</label>
-                        <input id="daysInput" type="number" value="365" min="30" max="5000"/>
-                    </div>
-                </div>
-                <div class="toolbar" style="margin-top:12px">
-                    <div>
-                        <button id="loadHistoricalBtn">Cargar histórico</button>
-                    </div>
-                    <div>
-                        <button id="loadPortfolioBtn" class="secondary">Cargar cartera CSV</button>
-                    </div>
-                    <div>
-                        <button id="recalcBtn" class="ghost">Recalcular KPI</button>
-                    </div>
-                    <div>
-                        <button id="addScenarioBtn" class="ghost">Añadir escenario</button>
-                    </div>
-                </div>
-                <p class="small">Configura las URLs en el bloque CONFIG del código. Para GitHub Pages se recomienda CSV/JSON estáticos en el repositorio.</p>
-            </section>
-            <section class="grid cols2">
-                <div class="card">
-                    <h2>Evolución histórica</h2>
-                    <canvas id="priceChart" height="110"></canvas>
-                </div>
-                <div class="card">
-                    <h2>Comparativa con referencia</h2>
-                    <canvas id="benchmarkChart" height="110"></canvas>
-                </div>
-            </section>
-            <section class="grid cols2">
-                <div class="card">
-                    <h2>Posiciones y operaciones</h2>
-                    <div class="table-wrap">
-                        <table id="portfolioTable">
-                            <thead>
-                                <tr>
-                                    <th>Valor</th>
-                                    <th>Cantidad</th>
-                                    <th>Compra media</th>
-                                    <th>Precio actual</th>
-                                    <th>PnL</th>
-                                    <th>PnL %</th>
-                                    <th>Dividendos</th>
-                                    <th>Comisiones</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>Seguimiento y escenarios</h2>
-                    <div class="split">
-                        <div>
-                            <label>Ticker vigilancia</label>
-                            <input id="watchSymbol" placeholder="IBE.MC"/>
-                        </div>
-                        <div>
-                            <label>Precio objetivo</label>
-                            <input id="watchTarget" type="number" step="0.0001"/>
-                        </div>
-                    </div>
-                    <div class="toolbar" style="margin-top:12px">
-                        <button id="addWatchBtn">Añadir seguimiento</button>
-                        <button id="simulateSaleBtn" class="secondary">Simular venta cartera</button>
-                    </div>
-                    <div class="table-wrap" style="margin-top:12px">
-                        <table id="watchTable">
-                            <thead>
-                                <tr>
-                                    <th>Ticker</th>
-                                    <th>Objetivo</th>
-                                    <th>Precio</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                    <div id="scenarioResult" class="card" style="margin-top:12px;background:#fafafa"></div>
-                </div>
-            </section>
-            <section class="card">
-                <div class="flex-between">
-                    <h2>Simulación fiscal</h2>
-                    <span class="pill gray">19% beneficio neto</span>
-                </div>
-                <div class="table-wrap">
-                    <table id="taxTable">
-                        <thead>
-                            <tr>
-                                <th>Valor</th>
-                                <th>Ganancia</th>
-                                <th>Pérdida</th>
-                                <th>Base neta</th>
-                                <th>Impuesto</th>
-                                <th>Resultado neto</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </section>
-            <section class="card">
-                <h2>Configuración de repositorio</h2>
-                <div class="row2">
-                    <div>
-                        <label>URL histórico CSV/JSON</label>
-                        <input id="historyUrlInput" placeholder="https://elgranmontoya.github.io/lasaccionesdefernando/data/historico.csv"/>
-                    </div>
-                    <div>
-                        <label>URL cartera CSV/JSON</label>
-                        <input id="portfolioUrlInput" placeholder="https://elgranmontoya.github.io/lasaccionesdefernando/data/cartera.csv"/>
-                    </div>
-                </div>
-                <div class="row2" style="margin-top:12px">
-                    <div>
-                        <label>API key Alpha Vantage</label>
-                        <input id="alphaKeyInput" placeholder="6ZRWPNHBJPU7RNRV"/>
-                    </div>
-                    <div>
-                        <label>API key Finnhub</label>
-                        <input id="finnhubKeyInput" placeholder="d8gos69r01qhjpmp10h0"/>
-                    </div>
-                </div>
-            </section>
-        </main>
-        <script>
-            const CONFIG = {
-                // <<< PON LA URL DE TU CSV/JSON EN EL REPO DE GITHUB PAGES
-                HISTORY_URL: 'data/historico.csv',
-                PORTFOLIO_URL: 'data/cartera.csv',
-                WATCH_URL: 'data/seguimiento.csv',
-                // <<< PON AQUÍ TUS API KEYS SI VAS A LLAMAR DESDE FRONTEND
-                ALPHA_VANTAGE_API_KEY: '6ZRWPNHBJPU7RNRV',
-                FINNHUB_API_KEY: 'd8gos69r01qhjpmp10h0',
-                // <<< SI USAS BACKEND PROPIO PARA YAHOO, PON SU URL
-                YAHOO_BACKEND_URL: 'https://yf-backend-m3ik.onrender.com/yahoo-history'
-            };
-            let priceChart, benchChart;
-            let portfolioData = [];
-            let watchData = [];
-            let currentHistory = [];
-            let currentBenchmark = [];
-            function fmtEUR(v) {
-                return new Intl.NumberFormat('es-ES',{
-                    style: 'currency',
-                    currency: 'EUR'
-                }).format(v || 0)
-            }
-            function fmtPct(v) {
-                return new Intl.NumberFormat('es-ES',{
-                    style: 'percent',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format((v || 0) / 100)
-            }
-            function parseCSV(text) {
-                const rows = text.trim().split(/\r?\n/).map(r => r.split(','));
-                return rows
-            }
-            function normalizeSymbol(s) {
-                return (s || '').trim()
-            }
-            function ma(vals, n) {
-                return vals.map( (_, i) => i < n - 1 ? null : vals.slice(i - n + 1, i + 1).reduce( (a, b) => a + b, 0) / n)
-            }
-            function taxNet(g, p) {
-                const used = Math.min(g, p);
-                const base = Math.max(0, g - used);
-                return {
-                    usedLoss: used,
-                    base,
-                    tax: base * 0.19,
-                    net: g - p - base * 0.19
-                }
-            }
-            function setText(id, val, cls) {
-                const el = document.getElementById(id);
-                el.textContent = val;
-                el.className = 'value ' + (cls || '')
-            }
-            async function fetchCSV(url) {
-                const r = await fetch(url, {
-                    cache: 'no-store'
-                });
-                return await r.text()
-            }
-            function parseHistoryCsv(text, symbolFilter) {
-                const rows = parseCSV(text);
-                const data = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const [date,symbol,price] = rows[i];
-                    if (!date)
-                        continue;
-                    if (symbolFilter && normalizeSymbol(symbol) !== normalizeSymbol(symbolFilter))
-                        continue;
-                    const d = new Date(date);
-                    const c = Number(String(price).replace(',', '.'));
-                    if (!isNaN(d) && isFinite(c))
-                        data.push({
-                            date: d,
-                            close: c,
-                            symbol
-                        })
-                }
-                data.sort( (a, b) => a.date - b.date);
-                return data
-            }
-            async function loadRepoHistory(symbol) {
-                const text = await fetchCSV(CONFIG.HISTORY_URL);
-                return parseHistoryCsv(text, symbol)
-            }
-            async function loadRepoPortfolio() {
-                const text = await fetchCSV(CONFIG.PORTFOLIO_URL);
-                const rows = parseCSV(text);
-                const out = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const [symbol,qty,buy,price,div,com,opened] = rows[i];
-                    if (!symbol)
-                        continue;
-                    out.push({
-                        symbol: normalizeSymbol(symbol),
-                        qty: Number(qty || 0),
-                        buy: Number(buy || 0),
-                        price: Number(price || 0),
-                        dividends: Number(div || 0),
-                        commissions: Number(com || 0),
-                        opened: String(opened || '').toLowerCase() !== 'no'
-                    })
-                }
-                return out
-            }
-            async function loadWatch() {
-                try {
-                    const text = await fetchCSV(CONFIG.WATCH_URL);
-                    const rows = parseCSV(text);
-                    watchData = [];
-                    for (let i = 1; i < rows.length; i++) {
-                        const [symbol,target,price,status] = rows[i];
-                        if (symbol)
-                            watchData.push({
-                                symbol: normalizeSymbol(symbol),
-                                target: Number(target || 0),
-                                price: Number(price || 0),
-                                status: status || ''
-                            })
-                    }
-                } catch (e) {
-                    watchData = []
-                }
-            }
-            function renderPortfolio() {
-                const tb = document.querySelector('#portfolioTable tbody');
-                tb.innerHTML = '';
-                let totalValue = 0
-                  , totalPnL = 0
-                  , totalCost = 0
-                  , totalDiv = 0
-                  , totalCom = 0;
-                portfolioData.forEach(p => {
-                    const current = p.price || p.buy;
-                    const invested = p.qty * p.buy + p.commissions;
-                    const value = p.qty * current;
-                    const pnl = (value + p.dividends - p.commissions) - (p.qty * p.buy);
-                    const pct = invested ? pnl / invested * 100 : 0;
-                    totalValue += value;
-                    totalPnL += pnl;
-                    totalCost += invested;
-                    totalDiv += p.dividends;
-                    totalCom += p.commissions;
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${p.symbol}</td><td>${p.qty}</td><td>${fmtEUR(p.buy)}</td><td>${fmtEUR(current)}</td><td class="${pnl >= 0 ? 'ok' : 'bad'}">${fmtEUR(pnl)}</td><td>${pct.toFixed(2)}%</td><td>${fmtEUR(p.dividends)}</td><td>${fmtEUR(p.commissions)}</td><td>${p.opened ? '<span class="pill green">Abierta</span>' : '<span class="pill gray">Cerrada</span>'}</td>`;
-                    tb.appendChild(tr)
-                }
-                );
-                setText('kpiPortfolioValue', fmtEUR(totalValue), totalValue >= 0 ? 'ok' : '');
-                setText('kpiPnL', fmtEUR(totalPnL), totalPnL >= 0 ? 'ok' : 'bad');
-                setText('kpiReturnPct', totalCost ? fmtPct(totalPnL / totalCost * 100) : '0,00%', '');
-                const tax = taxNet(Math.max(totalPnL, 0), Math.max(-totalPnL, 0));
-                setText('kpiTax', fmtEUR(tax.tax), tax.tax === 0 ? 'ok' : 'bad');
-                renderTaxTable();
-            }
-            function renderWatch() {
-                const tb = document.querySelector('#watchTable tbody');
-                tb.innerHTML = '';
-                watchData.forEach(w => {
-                    const tr = document.createElement('tr');
-                    const st = w.price >= w.target && w.target ? 'Objetivo alcanzado' : 'En seguimiento';
-                    tr.innerHTML = `<td>${w.symbol}</td><td>${fmtEUR(w.target)}</td><td>${fmtEUR(w.price)}</td><td>${st}</td>`;
-                    tb.appendChild(tr)
-                }
-                )
-            }
-            function renderTaxTable() {
-                const tb = document.querySelector('#taxTable tbody');
-                tb.innerHTML = '';
-                portfolioData.forEach(p => {
-                    const current = p.price || p.buy;
-                    const pnl = (p.qty * current + p.dividends - p.commissions) - (p.qty * p.buy);
-                    const gain = Math.max(0, pnl)
-                      , loss = Math.max(0, -pnl);
-                    const tax = taxNet(gain, loss);
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${p.symbol}</td><td>${fmtEUR(gain)}</td><td>${fmtEUR(loss)}</td><td>${fmtEUR(tax.base)}</td><td>${fmtEUR(tax.tax)}</td><td>${fmtEUR(tax.net)}</td>`;
-                    tb.appendChild(tr)
-                }
-                )
-            }
-            function renderCharts(history, benchmark) {
-                const labels = history.map(x => x.date.toISOString().slice(0, 10));
-                const close = history.map(x => x.close);
-                const s20 = ma(close, 20)
-                  , s50 = ma(close, 50)
-                  , s200 = ma(close, 200);
-                const ctx = document.getElementById('priceChart');
-                if (priceChart)
-                    priceChart.destroy();
-                priceChart = new Chart(ctx,{
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Precio',
-                            data: close,
-                            borderColor: '#2563eb',
-                            pointRadius: 0,
-                            fill: false
-                        }, {
-                            label: 'SMA 20',
-                            data: s20,
-                            borderColor: '#16a34a',
-                            pointRadius: 0,
-                            fill: false
-                        }, {
-                            label: 'SMA 50',
-                            data: s50,
-                            borderColor: '#f59e0b',
-                            pointRadius: 0,
-                            fill: false
-                        }, {
-                            label: 'SMA 200',
-                            data: s200,
-                            borderColor: '#7c3aed',
-                            pointRadius: 0,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: {
-                                    maxTicksLimit: 8
-                                }
-                            }
-                        }
-                    }
-                });
-                if (benchmark && benchmark.length) {
-                    const bmap = new Map(benchmark.map(x => [x.date.toISOString().slice(0, 10), x.close]));
-                    const ref = labels.map(d => bmap.get(d)).filter(v => v != null);
-                    const minLen = Math.min(close.length, ref.length);
-                    const baseA = close[close.findIndex(x => x)]
-                      , baseB = ref[ref.findIndex(x => x)];
-                    const normA = close.slice(-minLen).map(v => v / baseA * 100);
-                    const normB = ref.slice(-minLen).map(v => v / baseB * 100);
-                    const lb = labels.slice(-minLen);
-                    const c2 = document.getElementById('benchmarkChart');
-                    if (benchChart)
-                        benchChart.destroy();
-                    benchChart = new Chart(c2,{
-                        type: 'line',
-                        data: {
-                            labels: lb,
-                            datasets: [{
-                                label: 'Valor base 100',
-                                data: normA,
-                                borderColor: '#2563eb',
-                                pointRadius: 0,
-                                fill: false
-                            }, {
-                                label: 'Referencia base 100',
-                                data: normB,
-                                borderColor: '#dc2626',
-                                pointRadius: 0,
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            interaction: {
-                                mode: 'index',
-                                intersect: false
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'top'
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        maxTicksLimit: 8
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Base 100'
-                                    }
-                                }
-                            }
-                        }
-                    })
-                }
-            }
-            async function fetchAlpha(symbol, days) {
-                const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${encodeURIComponent(CONFIG.ALPHA_VANTAGE_API_KEY)}`;
-                const j = await (await fetch(url)).json();
-                const ts = j['Time Series (Daily)'] || {};
-                return Object.keys(ts).sort().slice(-days).map(d => ({
-                    date: new Date(d),
-                    close: Number(ts[d]['4. close'])
-                }))
-            }
-            async function fetchFinnhub(symbol, days) {
-                const end = Math.floor(Date.now() / 1000)
-                  , start = end - days * 86400;
-                const url = `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${start}&to=${end}&token=${encodeURIComponent(CONFIG.FINNHUB_API_KEY)}`;
-                const j = await (await fetch(url)).json();
-                if (j.s !== 'ok')
-                    return [];
-                return j.t.map( (t, i) => ({
-                    date: new Date(t * 1000),
-                    close: Number(j.c[i])
-                }))
-            }
-            async function fetchYahoo(symbol, days) {
-                const r = await fetch(`${CONFIG.YAHOO_BACKEND_URL}?symbol=${encodeURIComponent(symbol)}&maxRows=${days}`);
-                const j = await r.json();
-                return j.map(x => ({
-                    date: new Date(x.date),
-                    close: Number(x.close)
-                }))
-            }
-            async function loadHistorical() {
-                const source = document.getElementById('sourceSelect').value;
-                const symbol = normalizeSymbol(document.getElementById('symbolInput').value);
-                const bench = normalizeSymbol(document.getElementById('benchmarkInput').value);
-                const days = Number(document.getElementById('daysInput').value || 365);
-                let hist = [];
-                if (source === 'repoCsv' || source === 'googleFinance')
-                    hist = await loadRepoHistory(symbol);
-                else if (source === 'alphaVantage')
-                    hist = await fetchAlpha(symbol, days);
-                else if (source === 'finnhub')
-                    hist = await fetchFinnhub(symbol, days);
-                else if (source === 'yahooBackend')
-                    hist = await fetchYahoo(symbol, days);
-                let benchmark = [];
-                if (bench) {
-                    try {
-                        benchmark = await loadRepoHistory(bench)
-                    } catch (e) {
-                        benchmark = []
-                    }
-                }
-                currentHistory = hist;
-                currentBenchmark = benchmark;
-                renderCharts(hist, benchmark);
-                document.getElementById('scenarioResult').innerHTML = `<strong>${symbol}</strong>: ${hist.length} puntos cargados${benchmark.length ? ` · referencia ${bench}` : ''}`
-            }
-            async function loadPortfolioFromRepo() {
-                try {
-                    portfolioData = await loadRepoPortfolio()
-                } catch (e) {
-                    portfolioData = []
-                }
-                renderPortfolio();
-                renderWatch()
-            }
-            function simulateSalePortfolio() {
-                const rows = portfolioData.map(p => {
-                    const current = p.price || p.buy;
-                    return {
-                        symbol: p.symbol,
-                        qty: p.qty,
-                        buy: p.buy,
-                        sell: current
-                    }
-                }
-                );
-                let gains = 0
-                  , losses = 0;
-                const detail = rows.map(r => {
-                    const pl = (r.sell - r.buy) * r.qty;
-                    const g = Math.max(pl, 0)
-                      , l = Math.max(-pl, 0);
-                    gains += g;
-                    losses += l;
-                    return {
-                        symbol: r.symbol,
-                        gain: g,
-                        loss: l,
-                        base: pl
-                    }
-                }
-                );
-                const tax = taxNet(gains, losses);
-                const tb = document.querySelector('#taxTable tbody');
-                tb.innerHTML = '';
-                detail.forEach(d => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${d.symbol}</td><td>${fmtEUR(d.gain)}</td><td>${fmtEUR(d.loss)}</td><td>${fmtEUR(Math.max(0, d.base))}</td><td>${fmtEUR(tax.base ? Math.max(0, d.base) * 0.19 : 0)}</td><td>${fmtEUR(d.base - Math.max(0, d.base) * 0.19)}</td>`;
-                    tb.appendChild(tr)
-                }
-                );
-                const sr = document.getElementById('scenarioResult');
-                sr.innerHTML = `<div class='kpi-list'><div class='kpi'><span>Ganancias</span><span>${fmtEUR(gains)}</span></div><div class='kpi'><span>Pérdidas</span><span>${fmtEUR(losses)}</span></div><div class='kpi'><span>Pérdida compensable</span><span>${fmtEUR(tax.usedLoss)}</span></div><div class='kpi'><span>Impuesto</span><span>${fmtEUR(tax.tax)}</span></div><div class='kpi'><span>Neto tras impuestos</span><span>${fmtEUR(tax.net)}</span></div></div>`
-            }
-            document.getElementById('loadHistoricalBtn').addEventListener('click', loadHistorical);
-            document.getElementById('loadPortfolioBtn').addEventListener('click', loadPortfolioFromRepo);
-            document.getElementById('recalcBtn').addEventListener('click', () => {
-                renderPortfolio();
-                renderWatch()
-            }
-            );
-            document.getElementById('addWatchBtn').addEventListener('click', () => {
-                const s = normalizeSymbol(document.getElementById('watchSymbol').value)
-                  , t = Number(document.getElementById('watchTarget').value || 0);
-                if (!s)
-                    return;
-                watchData.push({
-                    symbol: s,
-                    target: t,
-                    price: 0,
-                    status: ''
-                });
-                renderWatch()
-            }
-            );
-            document.getElementById('simulateSaleBtn').addEventListener('click', simulateSalePortfolio);
-            document.getElementById('addScenarioBtn').addEventListener('click', () => {
-                document.getElementById('scenarioResult').innerHTML = '<strong>Escenario listo:</strong> usa el histórico cargado para comparar precio actual, medias y referencia base 100.'
-            }
-            );
-            (async () => {
-                await loadWatch();
-                await loadPortfolioFromRepo();
-            }
-            )();
-        </script>
-    </body>
+  <section class="card">
+    <div class="section-head"><div><h2>Configuración de APIs</h2><div class="muted">Los valores están incrustados como variables para el frontend y el backend de Yahoo ya está apuntado.</div></div></div>
+    <div class="cols3 grid">
+      <div><label>Alpha Vantage API key</label><input id="alphaKey" value="6ZRWPNHBJPU7RNRV"></div>
+      <div><label>Finnhub API key</label><input id="finnhubKey" value="d8gos69r01qhjpmp10h0"></div>
+      <div><label>Yahoo backend</label><input id="yahooUrl" value="https://yf-backend-m3ik.onrender.com/yahoo-history"></div>
+    </div>
+  </section>
+</main>
+<script>
+const CONFIG={HISTORY_URL:'data/historico.csv',OPS_URL:'data/operaciones.csv',PORTFOLIO_URL:'data/cartera.csv',WATCH_URL:'data/seguimiento.csv',ALPHA:'6ZRWPNHBJPU7RNRV',FINNHUB:'d8gos69r01qhjpmp10h0',YAHOO:'https://yf-backend-m3ik.onrender.com/yahoo-history'};
+let chart1,chart2,theme=(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=theme;document.getElementById('themeBtn').onclick=()=>{theme=theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme};
+const fmtEUR=v=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).format(v||0); const fmtPct=v=>new Intl.NumberFormat('es-ES',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2}).format((v||0)/100);
+const parseCSV=t=>t.trim().split(/\r?\n/).map(r=>r.split(',')); const ma=(a,n)=>a.map((_,i)=>i<n-1?null:a.slice(i-n+1,i+1).reduce((s,x)=>s+x,0)/n);
+async function fetchText(u){return (await fetch(u,{cache:'no-store'})).text()}
+function norm(s){return (s||'').trim()}
+async function loadOperations(){const text=await fetchText(CONFIG.OPS_URL); const rows=parseCSV(text); return rows.slice(1).filter(r=>r[0]).map(r=>({date:r[0],symbol:norm(r[1]),type:(r[2]||'').toLowerCase(),qty:+r[3]||0,price:+r[4]||0,fees:+r[5]||0,dividend:+r[6]||0,tax:+r[7]||0}))}
+function aggregatePortfolio(ops){const map=new Map(); ops.forEach(o=>{if(!map.has(o.symbol)) map.set(o.symbol,{symbol:o.symbol,qty:0,cost:0,fees:0,div:0,opened:false,lastPrice:0}); const p=map.get(o.symbol); if(o.type==='buy'){p.qty+=o.qty; p.cost+=o.qty*o.price; p.fees+=o.fees; p.opened=true; p.lastPrice=o.price;} else if(o.type==='sell'){p.qty-=o.qty; p.cost-=o.qty*o.price; p.fees+=o.fees; if(p.qty<=0) p.opened=false; p.lastPrice=o.price;} else if(o.type==='dividend'){p.div+=o.dividend; p.fees+=o.fees;} else {p.lastPrice=o.price||p.lastPrice;}}); return [...map.values()].map(p=>({symbol:p.symbol,qty:p.qty,buy:p.qty>0?p.cost/p.qty:0,price:p.lastPrice,dividends:p.div,commissions:p.fees,opened:p.opened}))}
+function taxNet(g,p){const used=Math.min(g,p); const base=Math.max(0,g-used); return {used,base,tax:base*0.19,net:g-p-base*0.19}}
+function renderOps(ops){const tb=document.querySelector('#opsTable tbody'); tb.innerHTML=''; ops.forEach(o=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${o.date}</td><td>${o.symbol}</td><td>${o.type}</td><td>${o.qty}</td><td>${fmtEUR(o.price)}</td><td>${fmtEUR(o.fees)}</td><td>${fmtEUR(o.dividend)}</td><td>${fmtEUR(o.tax)}</td>`; tb.appendChild(tr)})}
+function renderPortfolio(port){const tb=document.querySelector('#portfolioTable tbody'); tb.innerHTML=''; let tv=0,tp=0; port.forEach(p=>{const current=p.price||p.buy; const value=p.qty*current; const pnl=(value+p.dividends-p.commissions)-(p.qty*p.buy); const pct=(p.qty*p.buy)?pnl/(p.qty*p.buy)*100:0; tv+=value; tp+=pnl; const tr=document.createElement('tr'); tr.innerHTML=`<td>${p.symbol}</td><td>${p.qty}</td><td>${fmtEUR(p.buy)}</td><td>${fmtEUR(current)}</td><td>${fmtEUR(p.dividends)}</td><td>${fmtEUR(p.commissions)}</td><td>${p.opened?'Sí':'No'}</td><td class="${pnl>=0?'ok':'bad'}">${fmtEUR(pnl)}</td><td class="${pnl>=0?'ok':'bad'}">${pct.toFixed(2)}%</td>`; tb.appendChild(tr)}); document.getElementById('kpiValue').textContent=fmtEUR(tv); document.getElementById('kpiPnl').textContent=fmtEUR(tp); document.getElementById('kpiPct').textContent=tp===0?'0,00%':fmtPct(tp/(tv-tp)*100); document.getElementById('kpiTax').textContent=fmtEUR(taxNet(Math.max(tp,0),Math.max(-tp,0)).tax)}
+async function loadWatch(){const text=await fetchText(CONFIG.WATCH_URL); const rows=parseCSV(text); const tb=document.querySelector('#watchTable tbody'); tb.innerHTML=''; rows.slice(1).filter(r=>r[0]).forEach(r=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${r[0]}</td><td>${fmtEUR(+r[1]||0)}</td><td>${fmtEUR(+r[2]||0)}</td><td>${r[3]||''}</td>`; tb.appendChild(tr)})}
+async function loadRepoHistory(symbol){const text=await fetchText(CONFIG.HISTORY_URL); const rows=parseCSV(text).slice(1).filter(r=>!symbol || norm(r[1])===norm(symbol)); return rows.map(r=>({date:new Date(r[0]),close:+r[2]})).filter(x=>!isNaN(x.date)&&isFinite(x.close)).sort((a,b)=>a.date-b.date)}
+async function loadAlpha(symbol,days){const url=`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${encodeURIComponent(symbol)}&outputsize=full&apikey=${CONFIG.ALPHA}`; const j=await (await fetch(url)).json(); const ts=j['Time Series (Daily)']||{}; return Object.keys(ts).sort().slice(-days).map(d=>({date:new Date(d),close:+ts[d]['4. close']}))}
+async function loadFinnhub(symbol,days){const end=Math.floor(Date.now()/1000),start=end-days*86400; const url=`https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${start}&to=${end}&token=${CONFIG.FINNHUB}`; const j=await (await fetch(url)).json(); if(j.s!=='ok') return []; return j.t.map((t,i)=>({date:new Date(t*1000),close:+j.c[i]}))}
+async function loadYahoo(symbol,days){const j=await (await fetch(`${CONFIG.YAHOO}?symbol=${encodeURIComponent(symbol)}&maxRows=${days}`)).json(); return j.map(x=>({date:new Date(x.date),close:+x.close}))}
+function renderCharts(hist,bench){const labels=hist.map(x=>x.date.toISOString().slice(0,10)); const close=hist.map(x=>x.close); if(chart1)chart1.destroy(); chart1=new Chart(document.getElementById('priceChart'),{type:'line',data:{labels,datasets:[{label:'Precio',data:close,borderColor:'#01696f',pointRadius:0},{label:'SMA20',data:ma(close,20),borderColor:'#437a22',pointRadius:0,borderDash:[4,3]},{label:'SMA50',data:ma(close,50),borderColor:'#d19900',pointRadius:0,borderDash:[4,3]},{label:'SMA200',data:ma(close,200),borderColor:'#a12c7b',pointRadius:0,borderDash:[4,3]}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{x:{ticks:{maxTicksLimit:8}},y:{ticks:{callback:v=>v.toFixed(2)}}}}}); if(bench?.length){const bm=new Map(bench.map(x=>[x.date.toISOString().slice(0,10),x.close])); const b=labels.map(d=>bm.get(d)).filter(v=>v!=null); const min=Math.min(close.length,b.length); const a0=close[close.length-min], b0=b[b.length-min]; const a=close.slice(-min).map(v=>v/a0*100), bb=b.slice(-min).map(v=>v/b0*100), labs=labels.slice(-min); if(chart2)chart2.destroy(); chart2=new Chart(document.getElementById('benchChart'),{type:'line',data:{labels:labs,datasets:[{label:'Valor base 100',data:a,borderColor:'#01696f',pointRadius:0},{label:'Referencia base 100',data:bb,borderColor:'#a12c7b',pointRadius:0}]},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'}},scales:{y:{title:{display:true,text:'Base 100'}}}}})}}
+async function refreshAll(){const ops=await loadOperations(); const port=aggregatePortfolio(ops); renderOps(ops); renderPortfolio(port); await loadWatch();}
+document.getElementById('loadRepo').onclick=refreshAll; document.getElementById('addWatch').onclick=()=>{const s=norm(document.getElementById('watchSymbol').value),t=document.getElementById('watchTarget').value,p=document.getElementById('watchPrice').value,st=document.getElementById('watchStatus').value; if(!s) return; const tb=document.querySelector('#watchTable tbody'); const tr=document.createElement('tr'); tr.innerHTML=`<td>${s}</td><td>${fmtEUR(+t||0)}</td><td>${fmtEUR(+p||0)}</td><td>${st}</td>`; tb.prepend(tr)};
+document.getElementById('simulate').onclick=()=>{const ops=[...document.querySelectorAll('#opsTable tbody tr')].map(tr=>({symbol:tr.children[1].textContent, type:tr.children[2].textContent, qty:+tr.children[3].textContent||0, price:parseFloat(tr.children[4].textContent.replace(/[€.,\s]/g,'').replace(/\./g,''))||0})); const gains=ops.filter(o=>o.type==='sell').reduce((a,o)=>a+o.qty*o.price,0); const losses=0; const tx=taxNet(gains,losses); document.getElementById('scenarioBox').innerHTML=`<strong>Simulación venta cartera</strong><br>Ganancias: ${fmtEUR(gains)}<br>Pérdidas: ${fmtEUR(losses)}<br>Impuesto: ${fmtEUR(tx.tax)}<br>Neto: ${fmtEUR(tx.net)}`; document.getElementById('kpiTax').textContent=fmtEUR(tx.tax)};
+document.getElementById('loadHistory').onclick=async()=>{const src=document.getElementById('source').value,sym=norm(document.getElementById('symbol').value),bench=norm(document.getElementById('benchmark').value),days=+document.getElementById('days').value||365; let hist=[]; if(src==='repo') hist=await loadRepoHistory(sym); else if(src==='alpha') hist=await loadAlpha(sym,days); else if(src==='finnhub') hist=await loadFinnhub(sym,days); else hist=await loadYahoo(sym,days); let b=[]; if(bench) b=await loadRepoHistory(bench); renderCharts(hist,b)};
+(async()=>{await refreshAll()})();
+</script>
+</body>
 </html>
